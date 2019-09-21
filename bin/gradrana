@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+
+import sys,argparse
+
+import xml.sax
+from gradrana.tei import TeiP5Parser
+
+parser = argparse.ArgumentParser(description="Analyze a dramatic text.")
+parser.add_argument("infile",
+                    help="The input file containing the dramatic text.")
+args = parser.parse_args()
+
+xml_parser = xml.sax.make_parser()
+tei = TeiP5Parser()
+xml_parser.setContentHandler(tei)
+xml_parser.setFeature(xml.sax.handler.feature_namespaces, True)
+xml_parser.parse(args.infile)
+print(args.infile)
+szenen = tei.szenen
+
+#print(len(szenen))
+
+i = 1
+for akt in szenen:
+    print(str(i) + " Länge: " + str(len(akt)))
+    if type(akt) == list:
+        j = 1
+        for szene in akt:
+            print("\t" + str(i) + "." + str(j) + " Länge: " + str(len(szene)))
+            j += 1
+    i += 1
+
+
+print(szenen[0][0][0])
