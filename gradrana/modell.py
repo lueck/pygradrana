@@ -25,3 +25,12 @@ class Personenrede(object):
         for b in self.beitrag:
             rc += str(b)
         return rc
+
+    def spricht(self):
+        rc = "".join([str(b) for b in self.beitrag if type(b)==Rede])
+        rc = rc.lstrip(" \n\t.,:;")
+        rc = rc.rstrip(" \n\t")
+        return rc
+    
+    def __len__(self):
+        return len(self.spricht())

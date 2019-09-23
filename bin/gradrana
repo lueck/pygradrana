@@ -21,7 +21,7 @@ from gradrana.gliederung import Gliederung
 from gradrana.konfiguration import *
 
 verarbeitung = Gliederung(erste_rede=True)
-verarbeitung = Konfigurationsmatrix()
+verarbeitung = HtmlKonfigurationsmatrix(auswertfunktion=beitragslaenge)
 verarbeitung(tei.szenen, {})
 
 

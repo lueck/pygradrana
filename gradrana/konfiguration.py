@@ -1,45 +1,191 @@
+import os.path
+
 from gradrana.modell import Personenrede
+
 
 def praesenz(acc, rede):
     return 1
 
-def beitrags_anzahl(acc, rede):
+def beitragsanzahl(acc, rede):
     return acc + 1
 
-def beitrags_laenge(acc, rede):
-    # FIXME: misst laenge der liste von Userstrings
+def beitragslaenge(acc, rede):
     return acc + len(rede)
+
+def beitragswoerter(acc, rede):
+    return acc + len(rede.spricht().split())
 
 
 class Konfigurationsmatrix(object):
     """Erstellt eine Konfigurationsmatrix nach Solomon Marcus. """
 
-    def __init__(self, auswert_funktion = praesenz):
-        self.konfig = {}
-        self.auswert_funktion = auswert_funktion
+    def __init__(self,
+                 auswertfunktion = praesenz,
+                 anfangswert = 0):
+        self.auswertfunktion = auswertfunktion
+        self.anfangswert = anfangswert
+        self.konfiguration = {}
+        self.szenennummern = set()
+        self.personen = {}
+        self.kuerzel = {}
 
     def __call__(self, szenen, personen):
-        self.__konfiguration(szenen, personen)
-        print(self.konfig)
-
-    def __konfiguration(self, szenen, personen, nummer = 1, praefix = ""):
-        if szenen:
-            szene = szenen.pop()
-            praefix_neu = praefix + str(nummer) + "."
+        self.erstelle_dramatis_personae(szenen)
+        self.erstelle_konfiguration(szenen, personen)
+ 
+    def erstelle_konfiguration(self, szenen, personen, praefix = ""):
+        i = 1
+        for szene in szenen:
             if type(szene) == list:
                 ## Rekursion
-                konfig = self.__konfiguration(szene, personen, 1, praefix_neu)
+                self.erstelle_konfiguration(szene, personen, praefix + str(i) + ".")
             elif type(szene) == Personenrede:
-                if szene.kuerzel:
-                    name = szene.kuerzel
-                elif szene.name:
-                    name = szene.name
-                else:
-                    raise Exception("Anonyme Rede: " + praefix_neu)
-                if name not in self.konfig:
-                    self.konfig[name] = {}
-                bisher = self.konfig.get(name, {}).get(praefix, 0)
-                self.konfig[name][praefix] = self.auswert_funktion(bisher, szene.beitrag)
+                self.szenennummern.add(praefix)
+                name = self.bestimme_name(szene.name, szene.kuerzel, personen)
+                if name not in self.konfiguration:
+                    self.konfiguration[name] = {}
+                bisher = self.konfiguration[name].get(praefix, self.anfangswert)
+                self.konfiguration[name][praefix] = self.auswertfunktion(bisher, szene)
             else:
                 raise Exception("unerwarteter Datentyp")
-            self.__konfiguration(szenen, personen, nummer + 1, praefix)
+            i += 1
+
+    def erstelle_dramatis_personae(self, szenen):
+        for szene in szenen:
+            if type(szene) == list:
+                self.erstelle_dramatis_personae(szene)
+            elif type(szene) == Personenrede:
+                name = szene.name
+                kuerzel = szene.kuerzel
+                if not name in self.personen:
+                    self.personen[name] = {kuerzel : 1}
+                else:
+                    self.personen[name][kuerzel] = self.personen[name].get(kuerzel, 0) + 1
+                if not kuerzel in self.kuerzel:
+                    self.kuerzel[kuerzel] = {name : 1}
+                else:
+                    self.kuerzel[kuerzel][name] = self.kuerzel[kuerzel].get(kuerzel, 0) + 1
+
+    def bestimme_name(self, name, kuerzel, personen):
+        if kuerzel:
+            return kuerzel
+        elif name:
+            # FIXME: Ist personen wirklich Name->Kuerzel ?
+            if name in personen:
+                return personen[name]
+            if name in self.personen:
+                ks = self.personen[name]
+                return max(ks, key = ks.get)
+            else:
+                return name
+        else:
+            raise Exception("Anonyme Rede: " + praefix_neu)
+
+
+
+html_template = os.path.join(os.path.dirname(__file__),
+                             "konfiguration.html")
+
+
+class HtmlKonfigurationsmatrix(Konfigurationsmatrix):
+    """Formatiert die Konfigurationsmatrix als HTML-Dokument."""
+
+    def __init__(self, template = html_template, **kwargs):
+        self.template = template
+        super(HtmlKonfigurationsmatrix, self).__init__(**kwargs)
+
+    def __call__(self, szenen, personen):
+        super(HtmlKonfigurationsmatrix, self).__call__(szenen, personen)
+        print(self.formatiere_matrix())
+            
+    pre_kopf = "<thead><tr>"
+    post_kopf = "</tr></thead>\n"
+    pre_kopf_person = "<th>"
+    post_kopf_person = "</th>"
+    pre_kopf_szene = "<th>"
+    post_kopf_szene = "</th>"
+    pre_body = "<tbody>\n"
+    post_body = "</tbody>"
+    pre_zeile = "<tr>"
+    post_zeile = "</tr>\n"
+    pre_person = "<td>"
+    post_person = "</td>"
+    pre_szene = "<td>"
+    post_szene = "</td>"
+            
+    def erstelle_matrix(self):
+        rc = ""
+        rc += self.pre_kopf
+        rc += self.pre_kopf_person
+        rc += " "
+        rc + self.post_kopf_person
+        for szene in sorted(self.szenennummern):
+            rc += self.pre_kopf_szene
+            rc += szene
+            rc += self.post_kopf_szene
+        rc += self.post_kopf
+        rc += self.pre_body
+        for person in sorted(self.kuerzel):
+            rc += self.pre_zeile
+            rc += self.pre_person
+            rc += self.person_str(person)
+            rc += self.post_person
+            for szene in sorted(self.szenennummern):
+                rc += self.pre_szene
+                rc += str(self.konfiguration[person].get(szene, self.anfangswert))
+                rc += self.post_szene
+            rc += self.post_zeile
+        rc += self.post_body
+        return rc
+
+    def person_str(self, s):
+        return str(s).strip('#')
+    
+    def formatiere_matrix(self):
+        with open(self.template, "r") as f:
+            t = f.read()
+            return t.format(self.erstelle_matrix())
+            
+    
+
+latex_template = os.path.join(os.path.dirname(__file__),
+                              "konfiguration.tex")
+
+
+class LatexKonfigurationsmatrix(HtmlKonfigurationsmatrix):
+    """Formatiert die Konfigurationsmatrix als TeX-Dokument."""
+
+    pre_kopf = ""
+    post_kopf = "\\\\\\hline\n"
+    pre_kopf_person = ""
+    post_kopf_person = ""
+    pre_kopf_szene = "&"
+    post_kopf_szene = ""
+    pre_body = ""
+    post_body = ""
+    pre_zeile = ""
+    post_zeile = "\\\\\n"
+    pre_person = ""
+    post_person = ""
+    pre_szene = "&"
+    post_szene = ""
+            
+    def __init__(self, template = latex_template, **kwargs):
+        super(LatexKonfigurationsmatrix, self).__init__(**kwargs)
+        self.template = template
+
+    def formatiere_matrix(self):
+        with open(self.template, "r") as f:
+            t = f.read()
+            return t.format(self.erstelle_tabellen_format(),
+                            self.erstelle_matrix())
+
+    def erstelle_tabellen_format(self):
+        rc = "{|l|"
+        i = 0
+        l = len(self.szenennummern)
+        while i < l:
+            rc += "r|"
+            i += 1
+        rc += "}"
+        return rc
