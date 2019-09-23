@@ -1,6 +1,6 @@
 from xml.sax.handler import ContentHandler
 
-from .modell import *
+from gradrana.modell import *
 
 
 tei_ns = "http://www.tei-c.org/ns/1.0"
@@ -14,9 +14,10 @@ class TeiP5Parser(ContentHandler):
 
     """
 
-    def __init__(self, tei_ns = tei_ns):
+    def __init__(self, tei_ns = tei_ns, leere_behalten=False):
         """Konstruktor fuer einen TEI P5 Parser."""
         self.tei_ns = tei_ns
+        self.leere_behalten = leere_behalten
         # Initialisierung der Zustandsvariablen des Parsers
         self.reset()
         # Konstruktor der Superklasse aufrufen
@@ -69,8 +70,9 @@ class TeiP5Parser(ContentHandler):
             # Szene (Akt) zu Ende
             szene = self.szenen.pop()
             # aber nur, wenn die szene mindestens eine Liste oder
-            # mindestens eine Personenrede groß ist.
-            if len(szene) > 0:
+            # mindestens eine Personenrede groß ist, oder wenn leere
+            # behalten werden sollen.
+            if len(szene) > 0 or self.leere_behalten:
                 self.szenen[-1].append(szene)
             
         elif name == (self.tei_ns, "sp"):
