@@ -15,20 +15,15 @@ tei = TeiP5Parser()
 xml_parser.setContentHandler(tei)
 xml_parser.setFeature(xml.sax.handler.feature_namespaces, True)
 xml_parser.parse(args.infile)
-print(args.infile)
-szenen = tei.szenen
+#print(args.infile)
 
-#print(len(szenen))
+from gradrana.gliederung import Gliederung
+from gradrana.konfiguration import *
 
-i = 1
-for akt in szenen:
-    print(str(i) + " Länge: " + str(len(akt)))
-    if type(akt) == list:
-        j = 1
-        for szene in akt:
-            print("\t" + str(i) + "." + str(j) + " Länge: " + str(len(szene)))
-            j += 1
-    i += 1
+verarbeitung = Gliederung(erste_rede=True)
+verarbeitung = Konfigurationsmatrix()
+verarbeitung(tei.szenen, {})
 
 
-print(szenen[0][0][0])
+
+
