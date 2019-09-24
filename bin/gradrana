@@ -1,32 +1,104 @@
 #!/usr/bin/env python3
 
 import sys,argparse
-
 import xml.sax
-from gradrana.tei import TeiP5Parser
 
-parser = argparse.ArgumentParser(description="Analyze a dramatic text.")
-parser.add_argument("infile",
-                    help="The input file containing the dramatic text.")
+from gradrana.tei import TeiP5Parser
+from gradrana.gliederung import Gliederung
+from gradrana.konfiguration import *
+
+# argument parser
+
+parser = argparse.ArgumentParser(
+    description="Analyze a dramatic text.")
+subparsers = parser.add_subparsers(
+    dest="command",
+    help="Call 'gradrana SUBCOMMAND -h' for help on a subcommand.")
+
+matrix_parser = subparsers.add_parser(
+    "matrix",
+    help="Generate a configuration matrix of the analyzed play.")
+matrix_parser.add_argument(
+    "INFILE",
+    help="The input file containing the dramatic text.")
+
+matrix_output = matrix_parser.add_mutually_exclusive_group()
+matrix_output.add_argument(
+    "-m", "--html",
+    action="store_const",
+    dest="format",
+    const=HtmlKonfigurationsmatrix,
+    default=HtmlKonfigurationsmatrix) 
+matrix_output.add_argument(
+    "-t", "--tex",
+    action="store_const",
+    dest="format",
+    const=LatexKonfigurationsmatrix)
+
+matrix_calculator = matrix_parser.add_mutually_exclusive_group()
+matrix_calculator.add_argument(
+    "-p", "--presence",
+    action="store_const",
+    dest="calculator",
+    const=praesenz,
+    default=praesenz)
+matrix_calculator.add_argument(
+    "-a", "--appearances",
+    action="store_const",
+    dest="calculator",
+    const=beitragsanzahl)
+matrix_calculator.add_argument(
+    "-c", "--characters",
+    action="store_const",
+    dest="calculator",
+    const=beitragslaenge)
+matrix_calculator.add_argument(
+    "-w", "--words",
+    action="store_const",
+    dest="calculator",
+    const=beitragswoerter)
+
+matrix_parser.add_argument(
+    "-s", "--sums",
+    action="store_true")
+
+gliederung_parser = subparsers.add_parser(
+    "structuring",
+    help="Inspect the structuring (acts, scenes) of a dramatic text.")
+gliederung_parser.add_argument(
+    "INFILE",
+    help="The input file containing the dramatic text.")
+gliederung_parser.add_argument(
+    "-i", "--indented",
+    help="Output in indented form.",
+    action="store_true")
+gliederung_parser.add_argument(
+    "-f", "--first-speech",
+    help="Include each scene's first speech. This may help to find annotation errors.",
+    action="store_true")
+
 args = parser.parse_args()
+#print(args)
+
+# Parse input file
 
 xml_parser = xml.sax.make_parser()
 tei = TeiP5Parser()
 xml_parser.setContentHandler(tei)
 xml_parser.setFeature(xml.sax.handler.feature_namespaces, True)
-xml_parser.parse(args.infile)
-#print(args.infile)
+xml_parser.parse(args.INFILE)
 
-from gradrana.gliederung import Gliederung
-from gradrana.konfiguration import *
+# Do what was said in the arguments
 
-verarbeitung = Gliederung(erste_rede=False)
-verarbeitung = LatexKonfigurationsmatrix(auswertfunktion=praesenz, summen=True)
-#verarbeitung = Konfigurationsmatrix(auswertfunktion=beitragsanzahl)
+if args.command == "matrix":
+    verarbeitung = args.format(
+        auswertfunktion=args.calculator,
+        summen=args.sums)
+elif args.command == "structuring":
+    verarbeitung = Gliederung(
+        erste_rede=args.first_speech,
+        treppe=args.indented)
+
 verarbeitung(tei.szenen, {})
 
 #print(verarbeitung.personen, "\n\n", verarbeitung.kuerzel)
-
-
-
-
