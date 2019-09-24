@@ -38,8 +38,12 @@ class DramaVisualization(ConfigurationGraph):
                 w = 1
             pre, n1, n2 = k.split("|")
             G.add_edge(n1, n2, weight=w)
+        edge_weights = [G[u][v]["weight"] for u, v in G.edges()]
+        if self.weighted_edges:
+            max_weight = max(edge_weights)
+            edge_weights = [ 10 * w / max_weight for w in edge_weights]
         # plot
-        nx.draw(G, with_labels=True, font_weight="normal")
+        nx.draw(G, with_labels=True, font_weight="normal", width=edge_weights)
         if self.outfile:
             plt.savefig(self.outfile)
         else:

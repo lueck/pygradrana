@@ -34,6 +34,8 @@ class HtmlAdjacencyMatrix(ConfigurationGraph):
                  avg_degree_label = "AVG DEGREE=",
                  missing_value = " ",
                  outfile = None,
+                 weighted_nodes = True, # only for viz
+                 weighted_edges = True, # only for viz
                  **kwargs):
         super(HtmlAdjacencyMatrix, self).__init__(**kwargs)
         self.template = template

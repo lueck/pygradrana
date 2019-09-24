@@ -25,5 +25,7 @@ setuptools.setup(
         "networkx",
         "Matplotlib"
     ],
-    scripts=["bin/gradrana"]
+    entry_points={
+        "console_scripts" : ["dranalyze=gradrana.app:__main__"]
+    },
 )
