@@ -4,20 +4,32 @@ from gradrana.modell import Personenrede
 
 
 def praesenz(acc, rede):
+    """Auswertungsfunktion: Praesenz auf Buehne."""
     return 1
 
 def beitragsanzahl(acc, rede):
+    """Auswertungsfunktion: Anzahl der Redebeitraege."""
     return acc + 1
 
 def beitragslaenge(acc, rede):
+    """Auswertungsfunktion: Laenge (Buchstaben) der Redebeitraege."""
     return acc + len(rede)
 
 def beitragswoerter(acc, rede):
+    """Auswertungsfunktion: Anzahl der Woerter in Redebeitraegen."""
     return acc + len(rede.spricht().split())
 
 
 class Konfigurationsmatrix(object):
-    """Erstellt eine Konfigurationsmatrix nach Solomon Marcus. """
+    """Erstellt eine Konfigurationsmatrix nach Solomon Marcus.
+
+    Diese Klasse erzeugt selbst keine Ausgabe. Die Konfiguration wird
+    unter self.konfiguration generiert. Das aus allen Szenen
+    zusammengetragene Personal ist unter self.personen (Woerterbuch
+    nach Namen) bzw. self.kuerzel (Woerterbuch nach WHO-Attributen)
+    vorhanden.
+
+    """
 
     def __init__(self,
                  auswertfunktion = praesenz,
@@ -36,6 +48,8 @@ class Konfigurationsmatrix(object):
         self.erstelle_konfiguration(szenen, personen)
  
     def erstelle_konfiguration(self, szenen, personen, praefix = ""):
+        """Generiert die Konfiguration und speichert sie in
+        self.konfiguration."""
         i = 1
         szenennummer_hinzugefuegt = False
         for szene in szenen:
@@ -57,6 +71,8 @@ class Konfigurationsmatrix(object):
             i += 1
 
     def erstelle_dramatis_personae(self, szenen):
+        """Generiert die Personenuebersicht unter self.personen
+        bzw. self.kuerzel."""
         for szene in szenen:
             if type(szene) == list:
                 self.erstelle_dramatis_personae(szene)
@@ -118,6 +134,7 @@ class Konfigurationsmatrix(object):
 
 
     def bestimme_namen(self, namen, kuerzel, personen):
+        """Versucht das Nameskuerzel zu bestimmen."""
         if kuerzel:
             return kuerzel
         elif namen:
@@ -272,7 +289,7 @@ class LatexKonfigurationsmatrix(HtmlKonfigurationsmatrix):
     post_szene = ""
     pre_summe = "&"
     post_summe = ""
-    pre_zeile_summe = "\\hline\n"
+    pre_zeile_summe = "\\hline\\hline\n"
     post_zeile_summe = "\\\\\n"
             
     def __init__(self, template = latex_template, **kwargs):
