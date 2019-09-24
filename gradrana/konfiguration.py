@@ -27,7 +27,7 @@ class Konfigurationsmatrix(object):
         self.anfangswert = anfangswert
         self.ignoriere_in_name = ignoriere_in_name
         self.konfiguration = {}
-        self.szenennummern = set()
+        self.szenennummern = []
         self.personen = {}
         self.kuerzel = {}
 
@@ -37,12 +37,15 @@ class Konfigurationsmatrix(object):
  
     def erstelle_konfiguration(self, szenen, personen, praefix = ""):
         i = 1
+        szenennummer_hinzugefuegt = False
         for szene in szenen:
             if type(szene) == list:
                 ## Rekursion
                 self.erstelle_konfiguration(szene, personen, praefix + str(i) + ".")
             elif type(szene) == Personenrede:
-                self.szenennummern.add(praefix)
+                if not szenennummer_hinzugefuegt:
+                    self.szenennummern.append(praefix)
+                    szenennummer_hinzugefuegt = True
                 namen = self.bestimme_namen(szene.name, szene.kuerzel, personen)
                 for name in namen:
                     if name not in self.konfiguration:
@@ -151,8 +154,14 @@ html_template = os.path.join(os.path.dirname(__file__),
 class HtmlKonfigurationsmatrix(Konfigurationsmatrix):
     """Formatiert die Konfigurationsmatrix als HTML-Dokument."""
 
-    def __init__(self, template = html_template, **kwargs):
+    def __init__(self,
+                 template = html_template,
+                 summen = False,
+                 summen_titel = "TOTAL",
+                 **kwargs):
         self.template = template
+        self.summen = summen
+        self.summen_titel = summen_titel
         super(HtmlKonfigurationsmatrix, self).__init__(**kwargs)
 
     def __call__(self, szenen, personen):
@@ -173,6 +182,10 @@ class HtmlKonfigurationsmatrix(Konfigurationsmatrix):
     post_person = "</td>"
     pre_szene = "<td>"
     post_szene = "</td>"
+    pre_summe = "<td>"
+    post_summe = "</td>"
+    pre_zeile_summe = "<tfoot><tr>"
+    post_zeile_summe = "</tr></tfoot>"
             
     def erstelle_matrix(self):
         rc = ""
@@ -180,10 +193,14 @@ class HtmlKonfigurationsmatrix(Konfigurationsmatrix):
         rc += self.pre_kopf_person
         rc += " "
         rc + self.post_kopf_person
-        for szene in sorted(self.szenennummern):
+        for szene in self.szenennummern:
             rc += self.pre_kopf_szene
             rc += szene
             rc += self.post_kopf_szene
+        if self.summen:
+            rc += self.pre_summe
+            rc += self.summen_titel
+            rc += self.post_summe
         rc += self.post_kopf
         rc += self.pre_body
         for person in sorted(self.kuerzel):
@@ -191,12 +208,35 @@ class HtmlKonfigurationsmatrix(Konfigurationsmatrix):
             rc += self.pre_person
             rc += self.person_str(person)
             rc += self.post_person
-            for szene in sorted(self.szenennummern):
+            total = 0
+            for szene in self.szenennummern:
                 rc += self.pre_szene
-                rc += str(self.konfiguration[person].get(szene, self.anfangswert))
+                v = self.konfiguration[person].get(szene, self.anfangswert)
+                total += v
+                rc += str(v)
                 rc += self.post_szene
+            if self.summen:
+                rc += self.pre_summe
+                rc += str(total)
+                rc += self.post_summe
             rc += self.post_zeile
         rc += self.post_body
+        if self.summen:
+            rc += self.pre_zeile_summe
+            rc += self.pre_person
+            rc += self.summen_titel
+            rc += self.post_person
+            total = 0
+            for szene in self.szenennummern:
+                rc += self.pre_szene
+                v = sum([v.get(szene, self.anfangswert) for v in self.konfiguration.values()])
+                total += v
+                rc += str(v)
+                rc += self.post_szene
+            rc += self.pre_summe
+            rc += str(total)
+            rc += self.post_summe
+            rc += self.post_zeile_summe
         return rc
 
     def person_str(self, s):
@@ -230,6 +270,10 @@ class LatexKonfigurationsmatrix(HtmlKonfigurationsmatrix):
     post_person = ""
     pre_szene = "&"
     post_szene = ""
+    pre_summe = "&"
+    post_summe = ""
+    pre_zeile_summe = "\\hline\n"
+    post_zeile_summe = "\\\\\n"
             
     def __init__(self, template = latex_template, **kwargs):
         super(LatexKonfigurationsmatrix, self).__init__(**kwargs)
@@ -248,5 +292,10 @@ class LatexKonfigurationsmatrix(HtmlKonfigurationsmatrix):
         while i < l:
             rc += "r|"
             i += 1
+        if self.summen:
+            rc += "|r|"
         rc += "}"
         return rc
+
+    def person_str(self, s):
+        return str(s).strip('#').replace("_", "\\_")

@@ -21,11 +21,11 @@ from gradrana.gliederung import Gliederung
 from gradrana.konfiguration import *
 
 verarbeitung = Gliederung(erste_rede=False)
-verarbeitung = HtmlKonfigurationsmatrix(auswertfunktion=beitragslaenge)
-verarbeitung = Konfigurationsmatrix(auswertfunktion=beitragsanzahl)
+verarbeitung = LatexKonfigurationsmatrix(auswertfunktion=praesenz, summen=True)
+#verarbeitung = Konfigurationsmatrix(auswertfunktion=beitragsanzahl)
 verarbeitung(tei.szenen, {})
 
-print(verarbeitung.personen, "\n\n", verarbeitung.kuerzel)
+#print(verarbeitung.personen, "\n\n", verarbeitung.kuerzel)
 
 
 
