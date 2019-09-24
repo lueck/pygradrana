@@ -20,9 +20,12 @@ xml_parser.parse(args.infile)
 from gradrana.gliederung import Gliederung
 from gradrana.konfiguration import *
 
-verarbeitung = Gliederung(erste_rede=True)
+verarbeitung = Gliederung(erste_rede=False)
 verarbeitung = HtmlKonfigurationsmatrix(auswertfunktion=beitragslaenge)
+verarbeitung = Konfigurationsmatrix(auswertfunktion=beitragsanzahl)
 verarbeitung(tei.szenen, {})
+
+print(verarbeitung.personen, "\n\n", verarbeitung.kuerzel)
 
 
 

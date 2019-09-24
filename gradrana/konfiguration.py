@@ -21,9 +21,11 @@ class Konfigurationsmatrix(object):
 
     def __init__(self,
                  auswertfunktion = praesenz,
-                 anfangswert = 0):
+                 anfangswert = 0,
+                 ignoriere_in_name = " \n\t.,:;"):
         self.auswertfunktion = auswertfunktion
         self.anfangswert = anfangswert
+        self.ignoriere_in_name = ignoriere_in_name
         self.konfiguration = {}
         self.szenennummern = set()
         self.personen = {}
@@ -41,11 +43,12 @@ class Konfigurationsmatrix(object):
                 self.erstelle_konfiguration(szene, personen, praefix + str(i) + ".")
             elif type(szene) == Personenrede:
                 self.szenennummern.add(praefix)
-                name = self.bestimme_name(szene.name, szene.kuerzel, personen)
-                if name not in self.konfiguration:
-                    self.konfiguration[name] = {}
-                bisher = self.konfiguration[name].get(praefix, self.anfangswert)
-                self.konfiguration[name][praefix] = self.auswertfunktion(bisher, szene)
+                namen = self.bestimme_namen(szene.name, szene.kuerzel, personen)
+                for name in namen:
+                    if name not in self.konfiguration:
+                        self.konfiguration[name] = {}
+                    bisher = self.konfiguration[name].get(praefix, self.anfangswert)
+                    self.konfiguration[name][praefix] = self.auswertfunktion(bisher, szene)
             else:
                 raise Exception("unerwarteter Datentyp")
             i += 1
@@ -55,29 +58,87 @@ class Konfigurationsmatrix(object):
             if type(szene) == list:
                 self.erstelle_dramatis_personae(szene)
             elif type(szene) == Personenrede:
-                name = szene.name
-                kuerzel = szene.kuerzel
-                if not name in self.personen:
-                    self.personen[name] = {kuerzel : 1}
+                ## Mit Namensschluessel in self.person ablegen
+                
+                #name = szene.name
+                #kuerzel = szene.kuerzel
+                if type(szene.name) == list:
+                    for name in szene.name:
+                        name = name.strip(self.ignoriere_in_name)
+                        if not name in self.personen:
+                            for kuerzel in szene.kuerzel:
+                                self.personen[name] = {kuerzel : self.auswertfunktion(
+                                    self.anfangswert,
+                                    szene)}
+                        else:
+                            for kuerzel in szene.kuerzel:
+                                self.personen[name][kuerzel] = self.auswertfunktion(
+                                    self.personen[name].get(kuerzel, self.anfangswert),
+                                    szene)
                 else:
-                    self.personen[name][kuerzel] = self.personen[name].get(kuerzel, 0) + 1
-                if not kuerzel in self.kuerzel:
-                    self.kuerzel[kuerzel] = {name : 1}
+                    name = szene.name.strip(self.ignoriere_in_name)
+                    kuerzel = szene.kuerzel
+                    if not name in self.personen:
+                        self.personen[name] = {kuerzel : self.auswertfunktion(
+                            self.anfangswert,
+                            szene)}
+                    else:
+                        self.personen[name][kuerzel] = self.auswertfunktion(
+                            self.personen[name].get(kuerzel, self.anfangswert),
+                            szene)
+                ## Mit Kuerzelschluessel in self.kuerzel ablegen
+                if type(szene.kuerzel) == list:
+                    for kuerzel in szene.kuerzel:
+                        if not kuerzel in self.kuerzel:
+                            for name in szene.name:
+                                name = name.strip(self.ignoriere_in_name)
+                                self.kuerzel[kuerzel] = {name : self.auswertfunktion(
+                                    self.anfangswert,
+                                    szene)}
+                        else:
+                            for name in szene.name:
+                                name = name.strip(self.ignoriere_in_name)
+                                self.kuerzel[kuerzel][name] = self.auswertfunktion(
+                                    self.kuerzel[kuerzel].get(name, self.anfangswert),
+                                    szene)
                 else:
-                    self.kuerzel[kuerzel][name] = self.kuerzel[kuerzel].get(kuerzel, 0) + 1
+                    name = szene.name.strip(self.ignoriere_in_name)
+                    kuerzel = szene.kuerzel
+                    if not kuerzel in self.kuerzel:
+                        self.kuerzel[kuerzel] = {name : self.auswertfunktion(
+                            self.anfangswert,
+                            szene)}
+                    else:
+                        self.kuerzel[kuerzel][name] = self.auswertfunktion(
+                            self.kuerzel[kuerzel].get(kuerzel, 0),
+                            szene)
 
-    def bestimme_name(self, name, kuerzel, personen):
+
+    def bestimme_namen(self, namen, kuerzel, personen):
         if kuerzel:
             return kuerzel
-        elif name:
-            # FIXME: Ist personen wirklich Name->Kuerzel ?
-            if name in personen:
-                return personen[name]
-            if name in self.personen:
-                ks = self.personen[name]
-                return max(ks, key = ks.get)
+        elif namen:
+            if type(namen) == list:
+                for name in namen:
+                    name.strip(self.ignoriere_in_name)
+                    # FIXME: Ist personen wirklich Name->Kuerzel ?
+                    if name in personen:
+                        return personen[name]
+                    if name in self.personen:
+                        ks = self.personen[name]
+                        return max(ks, key = ks.get)
+                    else:
+                        return name
             else:
-                return name
+                name = namen.strip(self.ignoriere_in_name)
+                # FIXME: Ist personen wirklich Name->Kuerzel ?
+                if name in personen:
+                    return personen[name]
+                if name in self.personen:
+                    ks = self.personen[name]
+                    return max(ks, key = ks.get)
+                else:
+                    return name
         else:
             raise Exception("Anonyme Rede: " + praefix_neu)
 

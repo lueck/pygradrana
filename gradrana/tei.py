@@ -33,8 +33,8 @@ class TeiP5Parser(ContentHandler):
 
     def reset_personenrede(self):
         """Setzt Variablen zur Aggregation einer Personenrede zurueck."""
-        self.person = None
-        self.who = None
+        self.person = []
+        self.who = []
         self.text = []
         
     def startElementNS(self, name, qname, attrs):
@@ -49,7 +49,7 @@ class TeiP5Parser(ContentHandler):
             # Neue Personenrede
             self.reset_personenrede()
             try:
-                self.who = attrs.getValueByQName("who")
+                self.who = attrs.getValueByQName("who").split()
             except KeyError:
                 pass
             self.text_konstruktor.append(Rede)
@@ -96,7 +96,7 @@ class TeiP5Parser(ContentHandler):
             # Die Liste mit Bestandteilen des Rollennamens ist jetzt
             # verkehrt herum. Umdrehen und alles zum Rollennamen
             # zusammenfuegen:
-            self.person = "".join([str(teil) for teil in reversed(person_teile)])
+            self.person.append("".join([str(teil) for teil in reversed(person_teile)]))
             # Textkonstruktor fuer Rollenname entfernen
             self.text_konstruktor.pop()
 
