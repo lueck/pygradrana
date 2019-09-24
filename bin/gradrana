@@ -39,6 +39,20 @@ matrix_output.add_argument(
     action="store_const",
     dest="format",
     const=LatexKonfigurationsmatrix)
+matrix_parser.add_argument(
+    "-o", "--outfile",
+    help="Outputfile. Defaults to stdout.")
+matrix_parser.add_argument(
+    "-s", "--sums",
+    help="Include sums in output.",
+    action="store_true")
+matrix_parser.add_argument(
+    "-z", "--zeros",
+    help="Insert 0 (zero) where a value is missing.",
+    action="store_const",
+    dest="missing_value",
+    const=0,
+    default=" ")
 
 matrix_calculator = matrix_parser.add_mutually_exclusive_group()
 matrix_calculator.add_argument(
@@ -67,21 +81,11 @@ matrix_calculator.add_argument(
     dest="calculator",
     const=beitragswoerter)
 
-matrix_parser.add_argument(
-    "-s", "--sums",
-    help="Include sums in output.",
-    action="store_true")
-matrix_parser.add_argument(
-    "-z", "--zeros",
-    help="Insert 0 (zero) where a value is missing.",
-    action="store_const",
-    dest="missing_value",
-    const=0,
-    default=" ")
 
 gliederung_parser = subparsers.add_parser(
     "structuring",
-    help="Inspect the structuring (acts, scenes) of a dramatic text.")
+    help="Inspect the structuring (acts, scenes) of a dramatic text.",
+    description="Inspect the structuring (acts, scenes) of a dramatic text.")
 gliederung_parser.add_argument(
     "INFILE",
     help="The input file containing the dramatic text.")
@@ -96,10 +100,21 @@ gliederung_parser.add_argument(
 
 graph_parser = subparsers.add_parser(
     "graph",
-    help="Generate a social network graph of the analyzed play.")
+    help="Generate a social network graph of the analyzed play.",
+    description="Generate a social network graph of the analyzed play.")
 graph_parser.add_argument(
     "INFILE",
     help="The input file containing the dramatic text.")
+graph_parser.add_argument(
+    "-z", "--zeros",
+    help="Insert 0 (zero) where a value is missing.",
+    action="store_const",
+    dest="missing_value",
+    const=0,
+    default=" ")
+graph_parser.add_argument(
+    "-o", "--outfile",
+    help="Outputfile. Defaults to stdout.")
 
 graph_output = graph_parser.add_mutually_exclusive_group()
 graph_output.add_argument(
@@ -149,13 +164,6 @@ graph_calculator.add_argument(
     dest="calculator",
     const=beitragswoerter)
 
-graph_parser.add_argument(
-    "-z", "--zeros",
-    help="Insert 0 (zero) where a value is missing.",
-    action="store_const",
-    dest="missing_value",
-    const=0,
-    default=" ")
 
 args = parser.parse_args()
 #print(args)
@@ -174,7 +182,8 @@ if args.command == "matrix":
     processor = args.format(
         auswertfunktion=args.calculator,
         summen=args.sums,
-        missing_value=args.missing_value)
+        missing_value=args.missing_value,
+        outfile=args.outfile)
 elif args.command == "structuring":
     processor = Gliederung(
         erste_rede=args.first_speech,
@@ -182,7 +191,8 @@ elif args.command == "structuring":
 elif args.command == "graph":
     processor = args.format(
         auswertfunktion=args.calculator,
-        missing_value=args.missing_value)
+        missing_value=args.missing_value,
+        outfile=args.outfile)
 
 processor(tei.szenen, {})
 

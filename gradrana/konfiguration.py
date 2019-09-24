@@ -176,17 +176,22 @@ class HtmlKonfigurationsmatrix(Konfigurationsmatrix):
                  summen = False,
                  summen_titel = "TOTAL",
                  missing_value = " ",
+                 outfile = None,
                  **kwargs):
         self.template = template
         self.summen = summen
         self.summen_titel = summen_titel
         self.missing_value = missing_value
+        self.outfile = outfile
         super(HtmlKonfigurationsmatrix, self).__init__(**kwargs)
 
     def __call__(self, szenen, personen):
         super(HtmlKonfigurationsmatrix, self).__call__(szenen, personen)
-        print(self.formatiere_matrix())
-            
+        if self.outfile:
+            print(self.formatiere_matrix(), file=open(self.outfile, "w"))
+        else:
+            print(self.formatiere_matrix())
+
     pre_kopf = "<thead><tr>"
     post_kopf = "</tr></thead>\n"
     pre_kopf_person = "<th>"

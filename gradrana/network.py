@@ -7,7 +7,7 @@ from gradrana.graph import ConfigurationGraph
 class DramaVisualization(ConfigurationGraph):
 
     def __init__(self,
-                 outfile = "viz.png",
+                 outfile = None,
                  missing_value = " ",
                  weighted_nodes = True,
                  weighted_edges = True,
@@ -40,4 +40,7 @@ class DramaVisualization(ConfigurationGraph):
             G.add_edge(n1, n2, weight=w)
         # plot
         nx.draw(G, with_labels=True, font_weight="normal")
-        plt.savefig(self.outfile)
+        if self.outfile:
+            plt.savefig(self.outfile)
+        else:
+            plt.show()

@@ -33,16 +33,21 @@ class HtmlAdjacencyMatrix(ConfigurationGraph):
                  degree_label = "DEGREE",
                  avg_degree_label = "AVG DEGREE=",
                  missing_value = " ",
+                 outfile = None,
                  **kwargs):
         super(HtmlAdjacencyMatrix, self).__init__(**kwargs)
         self.template = template
         self.degree_label = degree_label
         self.avg_degree_label = avg_degree_label
         self.missing_value = missing_value
+        self.outfile = outfile
 
     def __call__(self, scenes, persons):
         super(HtmlAdjacencyMatrix, self).__call__(scenes, persons)
-        print(self.format_matrix())
+        if self.outfile:
+            print(self.format_matrix(), file=open(self.outfile, "w"))
+        else:
+            print(self.format_matrix())
 
     def format_matrix(self):
         with open(self.template, "r") as f:
