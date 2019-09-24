@@ -165,7 +165,7 @@ class Konfigurationsmatrix(object):
 
 
 html_template = os.path.join(os.path.dirname(__file__),
-                             "konfiguration.html")
+                             "table.html")
 
 
 class HtmlKonfigurationsmatrix(Konfigurationsmatrix):
@@ -175,10 +175,12 @@ class HtmlKonfigurationsmatrix(Konfigurationsmatrix):
                  template = html_template,
                  summen = False,
                  summen_titel = "TOTAL",
+                 missing_value = " ",
                  **kwargs):
         self.template = template
         self.summen = summen
         self.summen_titel = summen_titel
+        self.missing_value = missing_value
         super(HtmlKonfigurationsmatrix, self).__init__(**kwargs)
 
     def __call__(self, szenen, personen):
@@ -228,9 +230,8 @@ class HtmlKonfigurationsmatrix(Konfigurationsmatrix):
             total = 0
             for szene in self.szenennummern:
                 rc += self.pre_szene
-                v = self.konfiguration[person].get(szene, self.anfangswert)
-                total += v
-                rc += str(v)
+                total += self.konfiguration[person].get(szene, self.anfangswert)
+                rc += str(self.konfiguration[person].get(szene, self.missing_value))
                 rc += self.post_szene
             if self.summen:
                 rc += self.pre_summe
@@ -267,7 +268,7 @@ class HtmlKonfigurationsmatrix(Konfigurationsmatrix):
     
 
 latex_template = os.path.join(os.path.dirname(__file__),
-                              "konfiguration.tex")
+                              "table.tex")
 
 
 class LatexKonfigurationsmatrix(HtmlKonfigurationsmatrix):
@@ -277,8 +278,8 @@ class LatexKonfigurationsmatrix(HtmlKonfigurationsmatrix):
     post_kopf = "\\\\\\hline\n"
     pre_kopf_person = ""
     post_kopf_person = ""
-    pre_kopf_szene = "&"
-    post_kopf_szene = ""
+    pre_kopf_szene = "&\\rot{"
+    post_kopf_szene = "}"
     pre_body = ""
     post_body = ""
     pre_zeile = ""

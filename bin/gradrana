@@ -6,6 +6,8 @@ import xml.sax
 from gradrana.tei import TeiP5Parser
 from gradrana.gliederung import Gliederung
 from gradrana.konfiguration import *
+from gradrana.adjacencymatrix import *
+from gradrana.network import *
 
 # argument parser
 
@@ -17,7 +19,8 @@ subparsers = parser.add_subparsers(
 
 matrix_parser = subparsers.add_parser(
     "matrix",
-    help="Generate a configuration matrix of the analyzed play.")
+    help="Generate a configuration matrix of the analyzed play.",
+    description="Generate a configuration matrix of the analyzed play.")
 matrix_parser.add_argument(
     "INFILE",
     help="The input file containing the dramatic text.")
@@ -25,12 +28,14 @@ matrix_parser.add_argument(
 matrix_output = matrix_parser.add_mutually_exclusive_group()
 matrix_output.add_argument(
     "-m", "--html",
+    help="Generate XHTML output.",
     action="store_const",
     dest="format",
     const=HtmlKonfigurationsmatrix,
     default=HtmlKonfigurationsmatrix) 
 matrix_output.add_argument(
     "-t", "--tex",
+    help="Generate LaTeX output.",
     action="store_const",
     dest="format",
     const=LatexKonfigurationsmatrix)
@@ -38,29 +43,41 @@ matrix_output.add_argument(
 matrix_calculator = matrix_parser.add_mutually_exclusive_group()
 matrix_calculator.add_argument(
     "-p", "--presence",
+    help="Evaluate presence on stage.",
     action="store_const",
     dest="calculator",
     const=praesenz,
     default=praesenz)
 matrix_calculator.add_argument(
-    "-a", "--appearances",
+    "-c", "--contributions",
+    help="Evaluate count of contributions to talk on stage.",
     action="store_const",
     dest="calculator",
     const=beitragsanzahl)
 matrix_calculator.add_argument(
-    "-c", "--characters",
+    "-l", "--letters",
+    help="Evaluate length of utterances by counting letters (characters).",
     action="store_const",
     dest="calculator",
     const=beitragslaenge)
 matrix_calculator.add_argument(
     "-w", "--words",
+    help="Evaluate length of utterances by counting words.",
     action="store_const",
     dest="calculator",
     const=beitragswoerter)
 
 matrix_parser.add_argument(
     "-s", "--sums",
+    help="Include sums in output.",
     action="store_true")
+matrix_parser.add_argument(
+    "-z", "--zeros",
+    help="Insert 0 (zero) where a value is missing.",
+    action="store_const",
+    dest="missing_value",
+    const=0,
+    default=" ")
 
 gliederung_parser = subparsers.add_parser(
     "structuring",
@@ -77,6 +94,69 @@ gliederung_parser.add_argument(
     help="Include each scene's first speech. This may help to find annotation errors.",
     action="store_true")
 
+graph_parser = subparsers.add_parser(
+    "graph",
+    help="Generate a social network graph of the analyzed play.")
+graph_parser.add_argument(
+    "INFILE",
+    help="The input file containing the dramatic text.")
+
+graph_output = graph_parser.add_mutually_exclusive_group()
+graph_output.add_argument(
+    "-m", "--html",
+    help="Generate XHTML adjacency matrix.",
+    action="store_const",
+    dest="format",
+    const=HtmlAdjacencyMatrix,
+    default=HtmlAdjacencyMatrix) 
+graph_output.add_argument(
+    "-t", "--tex",
+    help="Generate LaTeX adjacency matrix.",
+    action="store_const",
+    dest="format",
+    const=LatexAdjacencyMatrix) 
+graph_output.add_argument(
+    "-v", "--visualization",
+    help="Generate visualization of the social network graph.",
+    action="store_const",
+    dest="format",
+    const=DramaVisualization) 
+
+graph_calculator = graph_parser.add_mutually_exclusive_group()
+graph_calculator.add_argument(
+    "-p", "--presence",
+    help="Evaluate presence on stage.",
+    action="store_const",
+    dest="calculator",
+    const=praesenz,
+    default=praesenz)
+graph_calculator.add_argument(
+    "-c", "--contributions",
+    help="Evaluate count of contributions to talk on stage.",
+    action="store_const",
+    dest="calculator",
+    const=beitragsanzahl)
+graph_calculator.add_argument(
+    "-l", "--letters",
+    help="Evaluate length of utterances by counting letters (characters).",
+    action="store_const",
+    dest="calculator",
+    const=beitragslaenge)
+graph_calculator.add_argument(
+    "-w", "--words",
+    help="Evaluate length of utterances by counting words.",
+    action="store_const",
+    dest="calculator",
+    const=beitragswoerter)
+
+graph_parser.add_argument(
+    "-z", "--zeros",
+    help="Insert 0 (zero) where a value is missing.",
+    action="store_const",
+    dest="missing_value",
+    const=0,
+    default=" ")
+
 args = parser.parse_args()
 #print(args)
 
@@ -91,14 +171,19 @@ xml_parser.parse(args.INFILE)
 # Do what was said in the arguments
 
 if args.command == "matrix":
-    verarbeitung = args.format(
+    processor = args.format(
         auswertfunktion=args.calculator,
-        summen=args.sums)
+        summen=args.sums,
+        missing_value=args.missing_value)
 elif args.command == "structuring":
-    verarbeitung = Gliederung(
+    processor = Gliederung(
         erste_rede=args.first_speech,
         treppe=args.indented)
+elif args.command == "graph":
+    processor = args.format(
+        auswertfunktion=args.calculator,
+        missing_value=args.missing_value)
 
-verarbeitung(tei.szenen, {})
+processor(tei.szenen, {})
 
-#print(verarbeitung.personen, "\n\n", verarbeitung.kuerzel)
+#print(processor.personen, "\n\n", processor.kuerzel)

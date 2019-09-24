@@ -1,0 +1,25 @@
+\documentclass{{standalone}}
+
+\usepackage{{adjustbox}}
+\usepackage{{array}}
+
+% see https://tex.stackexchange.com/questions/32683/rotated-column-titles-in-tabular
+\newcolumntype{{R}}[2]{{%
+    >{{\adjustbox{{angle=#1,lap=\width-(#2)}}\bgroup}}%
+    l%
+    <{{\egroup}}%
+}}
+\newcommand*\rot{{\multicolumn{{1}}{{R{{60}}{{1em}}}}}}%
+
+\begin{{document}}
+
+\begin{{tabular}}{}
+  {}
+\end{{tabular}}
+
+\end{{document}}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
