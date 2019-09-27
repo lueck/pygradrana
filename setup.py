@@ -26,6 +26,7 @@ setuptools.setup(
         "Matplotlib"
     ],
     entry_points={
-        "console_scripts" : ["dranalyze=gradrana.app:__main__"]
+        "console_scripts" : ["dranalyze=gradrana.app:__main__",
+                             "gradrana=gradrana.app:__main__"]
     },
 )

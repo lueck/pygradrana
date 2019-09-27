@@ -55,7 +55,8 @@ subcommands run
 
 	gradrana SUBCOMMAND -h
 
-on the commandline. The subcommands are
+on the commandline. An alternative name of the program is
+`dranalyze`. The subcommands are
 
 **configuration**
 : Generate a configuration matrix of the analyzed play.
