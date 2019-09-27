@@ -1,7 +1,30 @@
 from gradrana.konfiguration import *
 
+def copresence(acc, w1, w2):
+    """Results 1 if a pair of figures is on stage at the same time, and 0
+    otherwise."""
+    return int(acc + w1 + w2 > 0)
+
+def sum_edge_weight(acc, w1, w2):
+    """Sums up edge weights. This results in edge weights that are
+    dominated by dominant figures.
+
+    """
+    return acc + w1 + w2
+
 def sum_min_edge_weight(acc, w1, w2):
+    """Sums up edge weights by adding the minum of w1 and w2. This results
+    in lower weighted edges for margin figures.
+
+    """
     return acc + min(w1, w2)
+
+def sum_max_edge_weight(acc, w1, w2):
+    """Sums up edge weights by adding the maximum of w1 and w2. This
+    results in edge weights that are dominated by dominant figures.
+
+    """
+    return acc + max(w1, w2)
 
 
 class ConfigurationGraph(Konfigurationsmatrix):

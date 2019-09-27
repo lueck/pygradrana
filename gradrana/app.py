@@ -8,6 +8,7 @@ from gradrana.gliederung import Gliederung
 from gradrana.konfiguration import *
 from gradrana.adjacencymatrix import *
 from gradrana.network import *
+from gradrana.graph import *
 
 def __main__():
 
@@ -169,6 +170,33 @@ def __main__():
         dest="calculator",
         const=beitragswoerter)
 
+    graph_edgeweight = graph_parser.add_mutually_exclusive_group()
+    graph_edgeweight.add_argument(
+        "-r", "--copresence",
+        help="Evaluate edge weights: Results 1 if a pair of figures is on stage at the same time, and 0 otherwise. (Default)",
+        action="store_const",
+        dest="edgeweight",
+        const=copresence,
+        default=copresence)
+    graph_edgeweight.add_argument(
+        "-u", "--sum-weight",
+        help="Evaluate edge weights: Sums up edge weights by adding the maximum of two persons contribution to the szene. This results in edge weights that are dominated by dominant figures.",
+        action="store_const",
+        dest="edgeweight",
+        const=sum_edge_weight)
+    graph_edgeweight.add_argument(
+        "-i", "--minimum",
+        help="Evaluate edge weights: Sums up edge weights by adding the minimum of two persons contribution to the szene. This results in lower weighted edges for margin figures.",
+        action="store_const",
+        dest="edgeweight",
+        const=sum_min_edge_weight)
+    graph_edgeweight.add_argument(
+        "-a", "--maximum",
+        help="Evaluate edge weights: Sums up edge weights by adding the maximum of two persons contribution to the szene. This results in edge weights that are dominated by dominant figures.",
+        action="store_const",
+        dest="edgeweight",
+        const=sum_max_edge_weight)
+
     # actually parse command line arguments
     args = parser.parse_args()
     #print(args)
@@ -196,7 +224,8 @@ def __main__():
             auswertfunktion=args.calculator,
             missing_value=args.missing_value,
             outfile=args.outfile,
-            weighted_edges=args.weighted_edges)
+            weighted_edges=args.weighted_edges,
+            sum_edge_weight=args.edgeweight)
 
     # call the processor with parsed scenes and dramatis personae
     processor(tei.szenen, {})
