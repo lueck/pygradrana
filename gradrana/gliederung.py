@@ -25,8 +25,7 @@ class Gliederung(object):
 
     def __gliederung(self, szenen, nummer = 1, praefix = "", einzug = ""):
         """Gibt die Gliederung eines Stückes aus."""
-        if szenen:
-            szene = szenen.pop()
+        for szene in szenen:
             if self.treppe:
                 print(einzug + str(nummer))
             if type(szene) == list and len(szene) > 0 and type(szene[0]) == list:
@@ -41,5 +40,5 @@ class Gliederung(object):
                     print(einzug + "\t" + str(szene[0]) + "\n")
             else:
                 print("Unbekannt")
-            ## weitere ausgeben
-            self.__gliederung(szenen, nummer + 1, praefix, einzug)
+            ## Nummer fuer naechste Szene
+            nummer += 1
